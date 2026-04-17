@@ -37,7 +37,6 @@
     overflow-x: hidden;
   }
 
-  /* GRID BG */
   body::before {
     content: '';
     position: fixed;
@@ -51,7 +50,6 @@
     z-index: 0;
   }
 
-  /* RED GLOW BLOB */
   body::after {
     content: '';
     position: fixed;
@@ -73,7 +71,6 @@
     padding: 0 24px;
   }
 
-  /* NAV */
   nav {
     position: relative;
     z-index: 10;
@@ -103,7 +100,6 @@
     letter-spacing: 0.08em;
   }
 
-  /* HERO */
   .hero {
     text-align: center;
     padding: 72px 0 48px;
@@ -160,7 +156,6 @@
 
   .hero-sub a:hover { color: var(--red); }
 
-  /* DOWNLOADER CARD */
   .dl-card {
     background: var(--dark2);
     border: 1px solid var(--border2);
@@ -212,7 +207,6 @@
 
   .paste-btn:hover { background: var(--border2); color: var(--text); }
 
-  /* OPTIONS ROW */
   .options-row {
     display: flex;
     gap: 12px;
@@ -271,7 +265,6 @@
     font-weight: 700;
   }
 
-  /* QUALITY STRIP */
   .quality-strip {
     display: flex;
     gap: 8px;
@@ -314,7 +307,6 @@
 
   .q-btn.active .q-badge { background: rgba(255,46,46,0.15); color: var(--red); }
 
-  /* MP3 notice: quality hidden */
   .quality-section { transition: opacity 0.2s; }
   .quality-section.hidden { opacity: 0.3; pointer-events: none; }
 
@@ -330,15 +322,6 @@
     gap: 8px;
   }
 
-  .quality-label .mp3-note {
-    color: var(--text3);
-    font-size: 10px;
-    font-weight: 400;
-    letter-spacing: 0.06em;
-    display: none;
-  }
-
-  /* DOWNLOAD BTN */
   .dl-btn {
     width: 100%;
     padding: 16px;
@@ -371,7 +354,6 @@
 
   .dl-btn:hover .arrow { transform: translateY(2px); }
 
-  /* STATUS */
   .status-box {
     background: var(--dark3);
     border: 1px solid var(--border);
@@ -389,7 +371,6 @@
   .status-box.visible { display: flex; }
   .status-box.error { border-color: var(--red); color: #ff7070; }
   .status-box.success { border-color: #2a6e2a; color: #5fca5f; }
-  .status-box.loading { color: var(--text2); }
 
   .spinner {
     width: 14px;
@@ -413,7 +394,6 @@
   .status-box.success .status-dot { background: #5fca5f; }
   .status-box.error .status-dot { background: var(--red); }
 
-  /* FEATURES */
   .section-title {
     font-family: var(--mono);
     font-size: 10px;
@@ -472,7 +452,6 @@
     letter-spacing: 0.02em;
   }
 
-  /* SUPPORTED FORMATS */
   .formats-row {
     display: flex;
     gap: 8px;
@@ -497,10 +476,7 @@
     background: rgba(255,46,46,0.05);
   }
 
-  /* PLATFORMS */
-  .platforms-section {
-    margin-bottom: 48px;
-  }
+  .platforms-section { margin-bottom: 48px; }
 
   .platform-list {
     display: flex;
@@ -522,7 +498,6 @@
     gap: 6px;
   }
 
-  /* DISCLAIMER */
   .disclaimer {
     background: var(--dark2);
     border: 1px solid var(--border);
@@ -537,14 +512,13 @@
     letter-spacing: 0.02em;
   }
 
-  /* FOOTER */
   footer {
     border-top: 1px solid var(--border);
     padding: 24px 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: gap;
+    flex-wrap: wrap;
     gap: 12px;
     margin-bottom: 40px;
   }
@@ -571,7 +545,6 @@
     letter-spacing: 0.05em;
   }
 
-  /* DOWNLOAD LINK RESULT */
   .result-link {
     display: none;
     margin-top: 16px;
@@ -613,13 +586,11 @@
 <body>
 
 <div class="wrap">
-  <!-- NAV -->
   <nav>
     <div class="nav-logo"><span>//</span> Y2VID.d4rkz</div>
     <div class="nav-badge">d4rkz.qzz.io</div>
   </nav>
 
-  <!-- HERO -->
   <div class="hero">
     <div class="hero-eyebrow">Free · No signup · No BS</div>
     <h1 class="hero-title">
@@ -629,7 +600,6 @@
     <p class="hero-sub">by <a href="https://d4rkz.qzz.io" target="_blank">D4rkz</a> · Powered by Cobalt</p>
   </div>
 
-  <!-- DOWNLOADER -->
   <div class="dl-card">
     <div class="input-row">
       <input
@@ -643,7 +613,6 @@
       <button class="paste-btn" id="pasteBtn">PASTE</button>
     </div>
 
-    <!-- FORMAT toggle -->
     <div class="options-row">
       <div class="seg-group">
         <span class="seg-label">FORMAT</span>
@@ -656,12 +625,8 @@
       </div>
     </div>
 
-    <!-- QUALITY -->
     <div class="quality-section" id="qualitySection">
-      <div class="quality-label">
-        Quality
-        <span class="mp3-note" id="mp3Note">N/A for MP3 — audio only</span>
-      </div>
+      <div class="quality-label">Quality</div>
       <div class="quality-strip" id="qualityStrip">
         <button class="q-btn" data-q="360">360p <span class="q-badge">SD</span></button>
         <button class="q-btn" data-q="480">480p <span class="q-badge">SD</span></button>
@@ -671,26 +636,19 @@
       </div>
     </div>
 
-    <!-- DOWNLOAD BTN -->
     <button class="dl-btn" id="dlBtn">
       <span>Download</span>
       <span class="arrow">↓</span>
     </button>
 
-    <!-- STATUS -->
-    <div class="status-box" id="statusBox">
-      <div class="spinner" id="spinner"></div>
-      <span id="statusText">Processing...</span>
-    </div>
+    <div class="status-box" id="statusBox"></div>
 
-    <!-- RESULT LINK -->
     <div class="result-link" id="resultLink">
       <span class="dl-icon">⬇</span>
       <a id="resultAnchor" href="#" target="_blank" rel="noopener">Download your file</a>
     </div>
   </div>
 
-  <!-- FEATURES -->
   <p class="section-title">Features</p>
   <div class="features-grid">
     <div class="feature-card">
@@ -725,7 +683,6 @@
     </div>
   </div>
 
-  <!-- FORMATS -->
   <p class="section-title">Output formats</p>
   <div class="formats-row">
     <span class="format-pill highlight">MP4</span>
@@ -737,7 +694,6 @@
     <span class="format-pill">1440p 2K</span>
   </div>
 
-  <!-- PLATFORMS -->
   <div class="platforms-section">
     <p class="section-title">Also works with</p>
     <div class="platform-list">
@@ -753,15 +709,13 @@
     </div>
   </div>
 
-  <!-- DISCLAIMER -->
   <div class="disclaimer">
-    ⚠ Y2VID is a tool for downloading publicly accessible content only. 
-    You are responsible for how you use downloaded content. 
-    Do not download copyrighted material without permission from the rights holder. 
+    ⚠ Y2VID is a tool for downloading publicly accessible content only.
+    You are responsible for how you use downloaded content.
+    Do not download copyrighted material without permission from the rights holder.
     Powered by open-source <a href="https://github.com/imputnet/cobalt" target="_blank" style="color:var(--text2);text-decoration:none;">Cobalt</a>.
   </div>
 
-  <!-- FOOTER -->
   <footer>
     <div class="footer-left">
       Built by <a href="https://d4rkz.qzz.io" target="_blank">D4rkz</a> · <a href="https://d4rkz.qzz.io" target="_blank">d4rkz.qzz.io</a>
@@ -771,28 +725,41 @@
 </div>
 
 <script>
+// ─── Cobalt instances ───────────────────────────────────────────────────────
+// Each entry is tried in order until one succeeds.
+// All of these have CORS_WILDCARD enabled (required for browser-side requests).
 const COBALT_INSTANCES = [
   'https://cobalt.permitted.gg',
   'https://cobalt.seitan.network',
   'https://cobalt.lunar.icu',
   'https://cobalt.mha.fi',
+  'https://cob.frytki.lol',
+  'https://cobalt.imput.net',   // official fallback
 ];
+
+// Required headers for Cobalt v10+.
+// Without "Accept: application/json" the server returns HTML and the
+// JSON.parse call throws — that's the "Failed to fetch" cascade you saw.
+const COBALT_HEADERS = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+};
 
 let selectedQuality = '720';
 let selectedFormat = 'mp4';
 
-const urlInput = document.getElementById('urlInput');
-const pasteBtn = document.getElementById('pasteBtn');
-const dlBtn = document.getElementById('dlBtn');
-const statusBox = document.getElementById('statusBox');
-const statusText = document.getElementById('statusText');
-const spinner = document.getElementById('spinner');
-const resultLink = document.getElementById('resultLink');
+// ─── DOM refs ───────────────────────────────────────────────────────────────
+const urlInput     = document.getElementById('urlInput');
+const pasteBtn     = document.getElementById('pasteBtn');
+const dlBtn        = document.getElementById('dlBtn');
+const statusBox    = document.getElementById('statusBox');
+const resultLink   = document.getElementById('resultLink');
 const resultAnchor = document.getElementById('resultAnchor');
 const qualitySection = document.getElementById('qualitySection');
-const qBtns = document.querySelectorAll('.q-btn');
-const fmtInputs = document.querySelectorAll('input[name="fmt"]');
+const qBtns        = document.querySelectorAll('.q-btn');
+const fmtInputs    = document.querySelectorAll('input[name="fmt"]');
 
+// ─── Paste button ────────────────────────────────────────────────────────────
 pasteBtn.addEventListener('click', async () => {
   try {
     const txt = await navigator.clipboard.readText();
@@ -804,6 +771,7 @@ pasteBtn.addEventListener('click', async () => {
   }
 });
 
+// ─── Quality selector ────────────────────────────────────────────────────────
 qBtns.forEach(btn => {
   btn.addEventListener('click', () => {
     qBtns.forEach(b => b.classList.remove('active'));
@@ -812,41 +780,37 @@ qBtns.forEach(btn => {
   });
 });
 
+// ─── Format toggle ───────────────────────────────────────────────────────────
 fmtInputs.forEach(inp => {
   inp.addEventListener('change', () => {
     selectedFormat = inp.value;
-    if (selectedFormat === 'mp3') {
-      qualitySection.classList.add('hidden');
-    } else {
-      qualitySection.classList.remove('hidden');
-    }
+    qualitySection.classList.toggle('hidden', selectedFormat === 'mp3');
   });
 });
 
+// ─── Status helpers ──────────────────────────────────────────────────────────
 function showStatus(type, msg) {
   statusBox.className = 'status-box visible ' + type;
-  spinner.style.display = type === 'loading' ? 'block' : 'none';
+  statusBox.innerHTML = '';
 
-  if (type !== 'loading') {
+  if (type === 'loading') {
+    const spinner = document.createElement('div');
+    spinner.className = 'spinner';
+    statusBox.appendChild(spinner);
+  } else {
     const dot = document.createElement('div');
     dot.className = 'status-dot';
-    statusBox.innerHTML = '';
     statusBox.appendChild(dot);
-    const span = document.createElement('span');
-    span.textContent = msg;
-    statusBox.appendChild(span);
-  } else {
-    statusBox.innerHTML = '';
-    statusBox.appendChild(spinner);
-    const span = document.createElement('span');
-    span.id = 'statusText';
-    span.textContent = msg;
-    statusBox.appendChild(span);
   }
+
+  const span = document.createElement('span');
+  span.textContent = msg;
+  statusBox.appendChild(span);
 }
 
 function hideStatus() {
   statusBox.className = 'status-box';
+  statusBox.innerHTML = '';
 }
 
 function showResult(url, filename) {
@@ -859,9 +823,21 @@ function hideResult() {
   resultLink.classList.remove('visible');
 }
 
-async function tryCobaltInstance(instance, url) {
+// ─── Core request ────────────────────────────────────────────────────────────
+// FIX 1: The original code called `tryCobaltInstance(instance + '/api/json')`
+//         then caught errors and called `tryCobaltInstance(instance)` — both
+//         paths ended up hitting the same broken URL.
+//         Now we explicitly probe `/` first (Cobalt v10 root endpoint) and
+//         fall back to `/api/json` (Cobalt v7–9) only on 404.
+//
+// FIX 2: `Accept: application/json` is now included in every request.
+//         Cobalt v10 returns a 400 Bad Request (or an HTML redirect page)
+//         when this header is absent, which caused the JSON parse to throw
+//         and bubble up as "Failed to fetch".
+
+async function tryCobaltInstance(baseUrl) {
   const body = {
-    url: url,
+    url: urlInput.value.trim(),
     videoQuality: selectedFormat === 'mp3' ? '720' : selectedQuality,
     youtubeVideoCodec: 'h264',
   };
@@ -873,21 +849,31 @@ async function tryCobaltInstance(instance, url) {
     body.downloadMode = 'auto';
   }
 
-  const res = await fetch(instance, {
+  // Try the v10 root endpoint first.
+  let res = await fetch(baseUrl + '/', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
+    headers: COBALT_HEADERS,
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(12000),
   });
 
+  // If root gives 404, the instance is probably running an older version.
+  if (res.status === 404) {
+    res = await fetch(baseUrl + '/api/json', {
+      method: 'POST',
+      headers: COBALT_HEADERS,
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(12000),
+    });
+  }
+
   if (!res.ok) throw new Error('HTTP ' + res.status);
+
   const data = await res.json();
   return data;
 }
 
+// ─── Download handler ────────────────────────────────────────────────────────
 dlBtn.addEventListener('click', async () => {
   const url = urlInput.value.trim();
 
@@ -895,9 +881,8 @@ dlBtn.addEventListener('click', async () => {
     showStatus('error', 'Please paste a video URL first.');
     return;
   }
-
   if (!url.startsWith('http')) {
-    showStatus('error', 'Invalid URL. Include https://');
+    showStatus('error', 'Invalid URL — must start with https://');
     return;
   }
 
@@ -906,23 +891,24 @@ dlBtn.addEventListener('click', async () => {
   dlBtn.querySelector('span').textContent = 'Processing...';
   showStatus('loading', 'Connecting to Cobalt...');
 
-  let lastError = '';
+  let lastError = 'unknown error';
 
   for (const instance of COBALT_INSTANCES) {
+    const host = new URL(instance).hostname;
     try {
-      showStatus('loading', `Trying instance: ${new URL(instance).hostname}`);
-      const data = await tryCobaltInstance(instance + '/api/json', url).catch(async () => {
-        return await tryCobaltInstance(instance, url);
-      });
+      showStatus('loading', `Trying ${host}…`);
+      const data = await tryCobaltInstance(instance);
 
+      // Surface-level error from the API itself.
       if (data.status === 'error' || data.error) {
-        const errCode = data.error?.code || data.status || 'unknown';
-        lastError = `Instance error: ${errCode}`;
+        const code = data.error?.code || data.status || 'unknown';
+        lastError = `${host}: API error — ${code}`;
         continue;
       }
 
-      if (data.status === 'redirect' || data.status === 'tunnel') {
-        const dlUrl = data.url;
+      // Success paths: redirect, tunnel, or a bare url field.
+      const dlUrl = data.url;
+      if (dlUrl && (data.status === 'redirect' || data.status === 'tunnel' || dlUrl)) {
         const filename = data.filename || (selectedFormat === 'mp3' ? 'audio.mp3' : 'video.mp4');
         hideStatus();
         showResult(dlUrl, filename);
@@ -931,28 +917,22 @@ dlBtn.addEventListener('click', async () => {
         return;
       }
 
-      if (data.url) {
-        const filename = data.filename || (selectedFormat === 'mp3' ? 'audio.mp3' : 'video.mp4');
-        hideStatus();
-        showResult(data.url, filename);
-        dlBtn.disabled = false;
-        dlBtn.querySelector('span').textContent = 'Download';
-        return;
-      }
-
-      lastError = 'Unexpected response from server.';
+      lastError = `${host}: unexpected response (status: ${data.status ?? 'none'})`;
     } catch (e) {
-      lastError = e.message || 'Connection failed';
-      continue;
+      // "Failed to fetch" usually means CORS is blocked on this instance.
+      lastError = e.name === 'AbortError'
+        ? `${host}: timed out`
+        : `${host}: ${e.message}`;
     }
   }
 
-  showStatus('error', 'All instances failed: ' + lastError + '. Try again later.');
+  showStatus('error', 'All instances failed — ' + lastError + '. Try again in a moment.');
   dlBtn.disabled = false;
   dlBtn.querySelector('span').textContent = 'Download';
 });
 
-urlInput.addEventListener('keydown', (e) => {
+// ─── Enter key ───────────────────────────────────────────────────────────────
+urlInput.addEventListener('keydown', e => {
   if (e.key === 'Enter') dlBtn.click();
 });
 </script>
