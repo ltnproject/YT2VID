@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Redirecting… — Y2VID</title>
+<style>
+  body {
+    background: #0a0a0a; color: #f0f0f0;
+    font-family: 'Space Mono', monospace;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; margin: 0; flex-direction: column; gap: 16px;
+    font-size: 13px; letter-spacing: .04em;
+  }
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid rgba(255,255,255,.1);
+    border-top-color: #ff2e2e;
+    border-radius: 50%; animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .msg { color: #999; }
+  a { color: #ff2e2e; }
+</style>
+</head>
+<body>
+<div class="spinner"></div>
+<div class="msg" id="msg">Redirecting…</div>
+
+<script>
+// ── What happened ────────────────────────────────────────────────────────
+// When a user visits:
+//   drk.qzz.io/YT2VID/https://youtube.com/watch?v=xxx
+// GitHub Pages finds no matching file and serves this 404.html.
+// We extract everything after /YT2VID/ and redirect to:
+//   drk.qzz.io/YT2VID/?url=https://youtube.com/watch?v=xxx
+
+(function () {
+  var path     = window.location.pathname;   // e.g. /YT2VID/https://youtube.com/...
+  var search   = window.location.search;     // e.g. ?si=xxx  (YouTube share suffix)
+  var base     = '/YT2VID/';
+
+  // Find the base segment and grab everything after it
+  var idx = path.indexOf(base);
+  if (idx === -1) {
+    // Fallback: not a URL-append style visit, just go home
+    document.getElementById('msg').innerHTML =
+      'Page not found. <a href="/YT2VID/">Go to Y2VID →</a>';
+    return;
+  }
+
+  var after = path.slice(idx + base.length); // "https://youtube.com/..."
+
+  if (!after || !after.startsWith('http')) {
+    // Nothing useful after the base — go home
+    window.location.replace(base);
+    return;
+  }
+
+  // Reconstruct the full original URL (re-attach any query string)
+  var videoUrl = after + search;
+
+  document.getElementById('msg').textContent = 'Loading Y2VID…';
+
+  // Redirect to the index with the URL pre-filled
+  window.location.replace(base + '?url=' + encodeURIComponent(videoUrl));
+})();
+</script>
+</body>
+</html>
