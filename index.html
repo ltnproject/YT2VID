@@ -3,616 +3,627 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Y2VID — by D4rkz</title>
+<title>YT2VID — by D4rkz</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<!-- ══ Firebase SDK (module) ══════════════════════════════════════════════ -->
+<script type="module">
+  import { initializeApp }          from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
+  import { getAnalytics, logEvent } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-analytics.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+                                    from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
+  import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs, serverTimestamp }
+                                    from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCvHZyWnb8EQ773wRd5YREmSn0_3SKtLtU",
+    authDomain:        "yt2vid.firebaseapp.com",
+    projectId:         "yt2vid",
+    storageBucket:     "yt2vid.firebasestorage.app",
+    messagingSenderId: "9819350374",
+    appId:             "1:9819350374:web:5ad6ac9a53a57347f894a7",
+    measurementId:     "G-XEEWKB3T9S"
+  };
+
+  const app       = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const auth      = getAuth(app);
+  const db        = getFirestore(app);
+  const provider  = new GoogleAuthProvider();
+
+  // Expose to global scope for the main script
+  window._fb = { analytics, logEvent, auth, db, provider,
+    GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged,
+    collection, addDoc, query, orderBy, limit, getDocs, serverTimestamp };
+
+  // Watch auth state
+  onAuthStateChanged(auth, user => {
+    window._fbUser = user || null;
+    document.dispatchEvent(new CustomEvent('authchange', { detail: user }));
+  });
+</script>
+
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --red: #ff2e2e;
-    --red-dim: #c41f1f;
-    --dark: #0a0a0a;
-    --dark2: #111111;
-    --dark3: #1a1a1a;
-    --dark4: #222222;
-    --border: #2a2a2a;
-    --border2: #333;
-    --text: #f0f0f0;
-    --text2: #999;
-    --text3: #555;
-    --mono: 'Space Mono', monospace;
-    --sans: 'Syne', sans-serif;
-    --radius: 10px;
-    --radius-lg: 16px;
-  }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    background: var(--dark);
-    color: var(--text);
-    font-family: var(--sans);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(var(--border) 1px, transparent 1px),
-      linear-gradient(90deg, var(--border) 1px, transparent 1px);
-    background-size: 48px 48px;
-    opacity: 0.35;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  body::after {
-    content: '';
-    position: fixed;
-    top: -200px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 700px;
-    height: 500px;
-    background: radial-gradient(ellipse, rgba(255,46,46,0.12) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .wrap {
-    position: relative;
-    z-index: 1;
-    max-width: 860px;
-    margin: 0 auto;
-    padding: 0 24px;
-  }
-
-  nav {
-    position: relative;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 22px 0;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .nav-logo {
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--text2);
-    letter-spacing: 0.05em;
-  }
-
-  .nav-logo span { color: var(--red); }
-
-  .nav-badge {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text3);
-    border: 1px solid var(--border2);
-    padding: 4px 10px;
-    border-radius: 999px;
-    letter-spacing: 0.08em;
-  }
-
-  .hero {
-    text-align: center;
-    padding: 72px 0 48px;
-  }
-
-  .hero-eyebrow {
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 0.2em;
-    color: var(--red);
-    text-transform: uppercase;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-  }
-
-  .hero-eyebrow::before,
-  .hero-eyebrow::after {
-    content: '';
-    display: block;
-    width: 40px;
-    height: 1px;
-    background: var(--red);
-    opacity: 0.5;
-  }
-
-  .hero-title {
-    font-family: var(--sans);
-    font-size: clamp(52px, 11vw, 96px);
-    font-weight: 800;
-    line-height: 0.9;
-    letter-spacing: -0.03em;
-    margin-bottom: 20px;
-  }
-
-  .hero-title .y { color: var(--red); }
-  .hero-title .vid { color: var(--text); }
-
-  .hero-sub {
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--text2);
-    letter-spacing: 0.03em;
-    margin-bottom: 8px;
-  }
-
-  .hero-sub a {
-    color: var(--text3);
-    text-decoration: none;
-    transition: color 0.2s;
-  }
-
-  .hero-sub a:hover { color: var(--red); }
-
-  .dl-card {
-    background: var(--dark2);
-    border: 1px solid var(--border2);
-    border-radius: var(--radius-lg);
-    padding: 28px;
-    margin-bottom: 24px;
-  }
-
-  .input-row {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-
-  .url-input {
-    flex: 1;
-    background: var(--dark3);
-    border: 1px solid var(--border2);
-    border-radius: var(--radius);
-    padding: 14px 18px;
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--text);
-    outline: none;
-    transition: border-color 0.2s;
-    min-width: 0;
-  }
-
-  .url-input::placeholder { color: var(--text3); }
-
-  .url-input:focus {
-    border-color: var(--red);
-    box-shadow: 0 0 0 3px rgba(255,46,46,0.08);
-  }
-
-  .paste-btn {
-    background: var(--dark4);
-    border: 1px solid var(--border2);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    color: var(--text2);
-    font-family: var(--mono);
-    font-size: 12px;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.15s;
-    letter-spacing: 0.05em;
-  }
-
-  .paste-btn:hover { background: var(--border2); color: var(--text); }
-
-  .options-row {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-  }
-
-  .seg-group {
-    display: flex;
-    background: var(--dark3);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    flex: 1;
-    min-width: 200px;
-  }
-
-  .seg-label {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--text3);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    padding: 8px 14px;
-    display: flex;
-    align-items: center;
-    border-right: 1px solid var(--border);
-    white-space: nowrap;
-  }
-
-  .seg-options {
-    display: flex;
-    flex: 1;
-  }
-
-  .seg-options input { display: none; }
-
-  .seg-options label {
-    flex: 1;
-    text-align: center;
-    padding: 8px 4px;
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--text2);
-    cursor: pointer;
-    transition: all 0.15s;
-    letter-spacing: 0.04em;
-    white-space: nowrap;
-  }
-
-  .seg-options label:hover { color: var(--text); background: rgba(255,255,255,0.03); }
-
-  .seg-options input:checked + label {
-    background: var(--red);
-    color: #fff;
-    font-weight: 700;
-  }
-
-  .quality-strip {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 24px;
-  }
-
-  .q-btn {
-    background: var(--dark3);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--text2);
-    cursor: pointer;
-    transition: all 0.15s;
-    letter-spacing: 0.05em;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .q-btn:hover { border-color: var(--border2); color: var(--text); }
-
-  .q-btn.active {
-    border-color: var(--red);
-    color: var(--red);
-    background: rgba(255,46,46,0.06);
-  }
-
-  .q-badge {
-    font-size: 9px;
-    padding: 2px 5px;
-    border-radius: 4px;
-    background: rgba(255,255,255,0.07);
-    color: var(--text3);
-    letter-spacing: 0.08em;
-  }
-
-  .q-btn.active .q-badge { background: rgba(255,46,46,0.15); color: var(--red); }
-
-  .quality-section { transition: opacity 0.2s; }
-  .quality-section.hidden { opacity: 0.3; pointer-events: none; }
-
-  .quality-label {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--text3);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .dl-btn {
-    width: 100%;
-    padding: 16px;
-    background: var(--red);
-    border: none;
-    border-radius: var(--radius);
-    color: #fff;
-    font-family: var(--sans);
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    cursor: pointer;
-    transition: all 0.15s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .dl-btn:hover { background: var(--red-dim); transform: translateY(-1px); }
-  .dl-btn:active { transform: translateY(0); }
-  .dl-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-  .dl-btn .arrow {
-    font-size: 18px;
-    transition: transform 0.2s;
-  }
-
-  .dl-btn:hover .arrow { transform: translateY(2px); }
-
-  .status-box {
-    background: var(--dark3);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 18px;
-    margin-top: 16px;
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--text2);
-    display: none;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .status-box.visible { display: flex; }
-  .status-box.error { border-color: var(--red); color: #ff7070; }
-  .status-box.success { border-color: #2a6e2a; color: #5fca5f; }
-
-  .spinner {
-    width: 14px;
-    height: 14px;
-    border: 2px solid rgba(255,255,255,0.1);
-    border-top-color: var(--red);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    flex-shrink: 0;
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .status-box.success .status-dot { background: #5fca5f; }
-  .status-box.error .status-dot { background: var(--red); }
-
-  .section-title {
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--text3);
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .section-title::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
-
-  .features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 12px;
-    margin-bottom: 40px;
-  }
-
-  .feature-card {
-    background: var(--dark2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 18px 20px;
-    transition: border-color 0.2s;
-  }
-
-  .feature-card:hover { border-color: var(--border2); }
-
-  .feature-icon {
-    font-size: 20px;
-    margin-bottom: 10px;
-    display: block;
-  }
-
-  .feature-name {
-    font-family: var(--sans);
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 5px;
-  }
-
-  .feature-desc {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text2);
-    line-height: 1.6;
-    letter-spacing: 0.02em;
-  }
-
-  .formats-row {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 40px;
-  }
-
-  .format-pill {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text2);
-    background: var(--dark3);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 5px 14px;
-    letter-spacing: 0.06em;
-  }
-
-  .format-pill.highlight {
-    border-color: var(--red);
-    color: var(--red);
-    background: rgba(255,46,46,0.05);
-  }
-
-  .platforms-section { margin-bottom: 48px; }
-
-  .platform-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .platform-tag {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text2);
-    background: var(--dark3);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 6px 14px;
-    letter-spacing: 0.05em;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .disclaimer {
-    background: var(--dark2);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--red);
-    border-radius: 0 var(--radius) var(--radius) 0;
-    padding: 14px 18px;
-    margin-bottom: 48px;
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text2);
-    line-height: 1.7;
-    letter-spacing: 0.02em;
-  }
-
-  footer {
-    border-top: 1px solid var(--border);
-    padding: 24px 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 40px;
-  }
-
-  .footer-left {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text3);
-    letter-spacing: 0.05em;
-  }
-
-  .footer-left a {
-    color: var(--text2);
-    text-decoration: none;
-    transition: color 0.2s;
-  }
-
-  .footer-left a:hover { color: var(--red); }
-
-  .footer-right {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text3);
-    letter-spacing: 0.05em;
-  }
-
-  .result-link {
-    display: none;
-    margin-top: 16px;
-    background: rgba(47,95,47,0.12);
-    border: 1px solid #2a6e2a;
-    border-radius: var(--radius);
-    padding: 14px 18px;
-    gap: 12px;
-    align-items: center;
-  }
-
-  .result-link.visible { display: flex; }
-
-  .result-link a {
-    font-family: var(--mono);
-    font-size: 13px;
-    color: #5fca5f;
-    text-decoration: none;
-    word-break: break-all;
-    flex: 1;
-    transition: color 0.2s;
-  }
-
-  .result-link a:hover { color: #8fea8f; text-decoration: underline; }
-
-  .result-link .dl-icon {
-    font-size: 18px;
-    flex-shrink: 0;
-  }
-
-  @media (max-width: 540px) {
-    .input-row { flex-direction: column; }
-    .seg-group { min-width: 0; }
-    .hero-title { font-size: 64px; }
-    footer { flex-direction: column; text-align: center; }
-  }
+/* ── Reset & tokens ──────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --red:       #ff2e2e;
+  --red-dim:   #c41f1f;
+  --gold:      #f5a623;
+  --green:     #5fca5f;
+  --dark:      #0a0a0a;
+  --dark2:     #111111;
+  --dark3:     #1a1a1a;
+  --dark4:     #222222;
+  --border:    #2a2a2a;
+  --border2:   #333;
+  --text:      #f0f0f0;
+  --text2:     #999;
+  --text3:     #555;
+  --mono:      'Space Mono', monospace;
+  --sans:      'Syne', sans-serif;
+  --r:         10px;
+  --rl:        16px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--dark);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* grid bg */
+body::before {
+  content:''; position:fixed; inset:0;
+  background-image: linear-gradient(var(--border) 1px,transparent 1px),
+                    linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size: 48px 48px; opacity:.35;
+  pointer-events:none; z-index:0;
+}
+body::after {
+  content:''; position:fixed; top:-200px; left:50%;
+  transform:translateX(-50%); width:700px; height:500px;
+  background:radial-gradient(ellipse,rgba(255,46,46,.12) 0%,transparent 70%);
+  pointer-events:none; z-index:0;
+}
+
+/* ── Layout ──────────────────────────────────────────────────── */
+.wrap {
+  position:relative; z-index:1;
+  max-width:860px; margin:0 auto; padding:0 24px;
+}
+
+/* ══ PRO TIP TOPPER BANNER ══════════════════════════════════════ */
+.protip-banner {
+  position: relative; z-index: 20;
+  background: linear-gradient(90deg, rgba(245,166,35,.08) 0%, rgba(245,166,35,.03) 100%);
+  border-bottom: 1px solid rgba(245,166,35,.25);
+  padding: 10px 24px;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  flex-wrap: wrap; text-align: center;
+}
+.protip-banner .tip-icon {
+  font-size: 14px; flex-shrink: 0;
+}
+.protip-banner .tip-label {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: .18em; text-transform: uppercase;
+  color: var(--gold); font-weight: 700; flex-shrink: 0;
+}
+.protip-banner .tip-text {
+  font-family: var(--mono); font-size: 11px; color: var(--text2);
+  letter-spacing: .03em;
+}
+.protip-banner .tip-code {
+  font-family: var(--mono); font-size: 10px; color: var(--gold);
+  background: rgba(245,166,35,.1); border: 1px solid rgba(245,166,35,.25);
+  border-radius: 4px; padding: 2px 8px;
+  white-space: nowrap; cursor: pointer;
+  transition: background .15s;
+}
+.protip-banner .tip-code:hover { background: rgba(245,166,35,.2); }
+.protip-banner .tip-copy {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--green); opacity: 0; transition: opacity .3s;
+  flex-shrink: 0;
+}
+.protip-banner .tip-copy.show { opacity: 1; }
+
+/* ── Nav ──────────────────────────────────────────────────────── */
+nav {
+  position:relative; z-index:10;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:22px 0; border-bottom:1px solid var(--border); gap:12px;
+}
+.nav-logo { font-family:var(--mono); font-size:13px; color:var(--text2); letter-spacing:.05em; }
+.nav-logo span { color:var(--red); }
+.nav-right { display:flex; align-items:center; gap:10px; }
+.nav-badge {
+  font-family:var(--mono); font-size:11px; color:var(--text3);
+  border:1px solid var(--border2); padding:4px 10px;
+  border-radius:999px; letter-spacing:.08em;
+}
+
+/* Auth button */
+.auth-btn {
+  font-family:var(--mono); font-size:11px; letter-spacing:.06em;
+  border-radius:8px; padding:6px 14px; cursor:pointer;
+  transition:all .15s; display:flex; align-items:center; gap:7px;
+  white-space:nowrap;
+}
+.auth-btn.signin {
+  background:var(--dark3); border:1px solid var(--border2); color:var(--text2);
+}
+.auth-btn.signin:hover { border-color:var(--text3); color:var(--text); }
+.auth-btn.signout {
+  background:transparent; border:1px solid var(--border); color:var(--text3);
+}
+.auth-btn.signout:hover { border-color:var(--border2); color:var(--text2); }
+.auth-avatar {
+  width:22px; height:22px; border-radius:50%;
+  object-fit:cover; border:1px solid var(--border2);
+}
+
+/* ── Hero ─────────────────────────────────────────────────────── */
+.hero { text-align:center; padding:64px 0 44px; }
+.hero-eyebrow {
+  font-family:var(--mono); font-size:11px;
+  letter-spacing:.2em; color:var(--red); text-transform:uppercase;
+  margin-bottom:20px;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+}
+.hero-eyebrow::before,.hero-eyebrow::after {
+  content:''; display:block; width:40px; height:1px; background:var(--red); opacity:.5;
+}
+.hero-title {
+  font-family:var(--sans); font-size:clamp(52px,11vw,96px);
+  font-weight:800; line-height:.9; letter-spacing:-.03em; margin-bottom:20px;
+}
+.hero-title .y{color:var(--red)} .hero-title .vid{color:var(--text)}
+.hero-sub { font-family:var(--mono); font-size:13px; color:var(--text2); letter-spacing:.03em; margin-bottom:8px; }
+.hero-sub a { color:var(--text3); text-decoration:none; transition:color .2s; }
+.hero-sub a:hover { color:var(--red); }
+
+/* ── Downloader card ──────────────────────────────────────────── */
+.dl-card {
+  background:var(--dark2); border:1px solid var(--border2);
+  border-radius:var(--rl); padding:28px; margin-bottom:12px;
+}
+
+/* input row */
+.input-row { display:flex; gap:10px; margin-bottom:20px; }
+.url-input {
+  flex:1; min-width:0;
+  background:var(--dark3); border:1px solid var(--border2);
+  border-radius:var(--r); padding:14px 18px;
+  font-family:var(--mono); font-size:13px; color:var(--text);
+  outline:none; transition:border-color .2s;
+}
+.url-input::placeholder { color:var(--text3); }
+.url-input:focus { border-color:var(--red); box-shadow:0 0 0 3px rgba(255,46,46,.08); }
+.paste-btn {
+  background:var(--dark4); border:1px solid var(--border2);
+  border-radius:var(--r); padding:14px 16px;
+  color:var(--text2); font-family:var(--mono); font-size:12px;
+  cursor:pointer; white-space:nowrap; transition:all .15s; letter-spacing:.05em;
+}
+.paste-btn:hover { background:var(--border2); color:var(--text); }
+
+/* format seg */
+.options-row { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px; }
+.seg-group {
+  display:flex; background:var(--dark3);
+  border:1px solid var(--border); border-radius:var(--r);
+  overflow:hidden; flex:1; min-width:200px;
+}
+.seg-label {
+  font-family:var(--mono); font-size:10px; color:var(--text3);
+  letter-spacing:.12em; text-transform:uppercase;
+  padding:8px 14px; display:flex; align-items:center;
+  border-right:1px solid var(--border); white-space:nowrap;
+}
+.seg-options { display:flex; flex:1; }
+.seg-options input { display:none; }
+.seg-options label {
+  flex:1; text-align:center; padding:8px 4px;
+  font-family:var(--mono); font-size:12px; color:var(--text2);
+  cursor:pointer; transition:all .15s; letter-spacing:.04em; white-space:nowrap;
+}
+.seg-options label:hover { color:var(--text); background:rgba(255,255,255,.03); }
+.seg-options input:checked + label { background:var(--red); color:#fff; font-weight:700; }
+
+/* quality */
+.quality-section { transition:opacity .2s; }
+.quality-section.hidden { opacity:.3; pointer-events:none; }
+.quality-label {
+  font-family:var(--mono); font-size:10px; color:var(--text3);
+  letter-spacing:.12em; text-transform:uppercase; margin-bottom:10px;
+}
+.quality-strip { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px; }
+.q-btn {
+  background:var(--dark3); border:1px solid var(--border);
+  border-radius:8px; padding:8px 14px;
+  font-family:var(--mono); font-size:12px; color:var(--text2);
+  cursor:pointer; transition:all .15s; letter-spacing:.05em;
+  display:flex; align-items:center; gap:6px;
+}
+.q-btn:hover { border-color:var(--border2); color:var(--text); }
+.q-btn.active { border-color:var(--red); color:var(--red); background:rgba(255,46,46,.06); }
+.q-badge {
+  font-size:9px; padding:2px 5px; border-radius:4px;
+  background:rgba(255,255,255,.07); color:var(--text3); letter-spacing:.08em;
+}
+.q-btn.active .q-badge { background:rgba(255,46,46,.15); color:var(--red); }
+
+/* download btn */
+.dl-btn {
+  width:100%; padding:16px; background:var(--red); border:none;
+  border-radius:var(--r); color:#fff; font-family:var(--sans); font-size:15px;
+  font-weight:700; letter-spacing:.04em; cursor:pointer; transition:all .15s;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+}
+.dl-btn:hover { background:var(--red-dim); transform:translateY(-1px); }
+.dl-btn:active { transform:translateY(0); }
+.dl-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+.dl-btn .arrow { font-size:18px; transition:transform .2s; }
+.dl-btn:hover .arrow { transform:translateY(2px); }
+
+/* status */
+.status-box {
+  background:var(--dark3); border:1px solid var(--border);
+  border-radius:var(--r); padding:14px 18px; margin-top:16px;
+  font-family:var(--mono); font-size:12px; color:var(--text2);
+  display:none; align-items:center; gap:10px;
+}
+.status-box.visible{display:flex}
+.status-box.error  {border-color:var(--red);color:#ff7070}
+.status-box.success{border-color:#2a6e2a;color:var(--green)}
+.spinner {
+  width:14px; height:14px;
+  border:2px solid rgba(255,255,255,.1); border-top-color:var(--red);
+  border-radius:50%; animation:spin .8s linear infinite; flex-shrink:0;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.status-box.success .status-dot{background:var(--green)}
+.status-box.error   .status-dot{background:var(--red)}
+
+/* result link */
+.result-link {
+  display:none; margin-top:16px;
+  background:rgba(47,95,47,.12); border:1px solid #2a6e2a;
+  border-radius:var(--r); padding:14px 18px; gap:12px; align-items:center;
+}
+.result-link.visible{display:flex}
+.result-link a {
+  font-family:var(--mono); font-size:13px; color:var(--green);
+  text-decoration:none; word-break:break-all; flex:1; transition:color .2s;
+}
+.result-link a:hover{color:#8fea8f;text-decoration:underline}
+.result-link .dl-icon{font-size:18px;flex-shrink:0}
+
+/* instance bar */
+.inst-bar {
+  background:var(--dark3); border:1px solid var(--border);
+  border-radius:var(--r); padding:10px 14px; margin-bottom:16px;
+  font-family:var(--mono); font-size:11px; color:var(--text3);
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+}
+.inst-bar .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--text3)}
+.inst-bar.loaded .dot{background:var(--green)}
+.inst-bar.warn   .dot{background:var(--gold)}
+.inst-bar.err    .dot{background:var(--red)}
+
+/* ══ SETTINGS PANEL ═════════════════════════════════════════════ */
+.settings-toggle {
+  width:100%;
+  background:var(--dark2); border:1px solid var(--border);
+  border-radius:var(--r); padding:13px 18px; margin-bottom:24px;
+  display:flex; align-items:center; justify-content:space-between;
+  cursor:pointer; transition:border-color .15s;
+  font-family:var(--mono); font-size:11px; color:var(--text3);
+  letter-spacing:.1em; text-transform:uppercase;
+}
+.settings-toggle:hover { border-color:var(--border2); color:var(--text2); }
+.settings-toggle .st-left { display:flex; align-items:center; gap:10px; }
+.settings-toggle .st-icon { font-size:14px; }
+.settings-toggle .st-arrow {
+  font-size:12px; transition:transform .2s; color:var(--text3);
+}
+.settings-toggle.open .st-arrow { transform:rotate(180deg); }
+
+.settings-panel {
+  background:var(--dark2); border:1px solid var(--border);
+  border-radius:var(--rl); padding:0; margin-bottom:24px;
+  display:none; overflow:hidden;
+}
+.settings-panel.open { display:block; }
+
+.sp-section {
+  padding:22px 24px;
+  border-bottom:1px solid var(--border);
+}
+.sp-section:last-child { border-bottom:none; }
+
+.sp-title {
+  font-family:var(--mono); font-size:11px; font-weight:700;
+  color:var(--text2); letter-spacing:.06em; margin-bottom:6px;
+  display:flex; align-items:center; gap:8px;
+}
+.sp-desc {
+  font-family:var(--mono); font-size:10px; color:var(--text3);
+  line-height:1.6; letter-spacing:.02em; margin-bottom:14px;
+}
+.sp-desc span { color:var(--text2); }
+
+/* button group (codec / container / quality) */
+.sp-btn-group {
+  display:flex; flex-wrap:wrap; gap:6px;
+}
+.sp-btn {
+  background:var(--dark3); border:1px solid var(--border);
+  border-radius:8px; padding:8px 16px;
+  font-family:var(--mono); font-size:12px; color:var(--text2);
+  cursor:pointer; transition:all .15s; letter-spacing:.04em;
+  display:flex; align-items:center; gap:6px;
+}
+.sp-btn:hover { border-color:var(--border2); color:var(--text); }
+.sp-btn.active {
+  border-color:var(--red); color:var(--red);
+  background:rgba(255,46,46,.06); font-weight:700;
+}
+
+/* quality grid — full row for 8k+ through 144p */
+.sp-quality-group { display:flex; flex-wrap:wrap; gap:6px; }
+.sp-quality-group .sp-btn { min-width: 60px; justify-content:center; }
+
+/* toggle switch */
+.sp-toggle-row {
+  display:flex; align-items:center; justify-content:space-between;
+  gap:16px;
+}
+.sp-toggle-label {
+  font-family:var(--mono); font-size:12px; color:var(--text);
+  letter-spacing:.03em; flex:1;
+}
+.toggle-sw {
+  position:relative; width:44px; height:24px; flex-shrink:0;
+}
+.toggle-sw input { display:none; }
+.toggle-sw .track {
+  position:absolute; inset:0; border-radius:999px;
+  background:var(--dark4); border:1px solid var(--border2);
+  cursor:pointer; transition:background .2s, border-color .2s;
+}
+.toggle-sw .thumb {
+  position:absolute; top:3px; left:3px;
+  width:16px; height:16px; border-radius:50%;
+  background:var(--text3); transition:all .2s; pointer-events:none;
+}
+.toggle-sw input:checked ~ .track { background:var(--red); border-color:var(--red); }
+.toggle-sw input:checked ~ .thumb { left:23px; background:#fff; }
+
+/* ══ AUTH / HISTORY ═════════════════════════════════════════════ */
+.history-section { margin-bottom:40px; }
+.history-card {
+  background:var(--dark2); border:1px solid var(--border);
+  border-radius:var(--rl); overflow:hidden;
+}
+.history-header {
+  padding:18px 22px;
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+}
+.history-header-left { display:flex; align-items:center; gap:10px; }
+.history-title {
+  font-family:var(--mono); font-size:11px; color:var(--text2);
+  letter-spacing:.1em; text-transform:uppercase; font-weight:700;
+}
+.history-user {
+  font-family:var(--mono); font-size:11px; color:var(--text3);
+  letter-spacing:.03em;
+}
+
+.history-empty {
+  padding:36px 22px; text-align:center;
+  font-family:var(--mono); font-size:12px; color:var(--text3);
+  line-height:1.7; letter-spacing:.03em;
+}
+.history-empty .big { font-size:28px; display:block; margin-bottom:10px; }
+
+.history-list { padding:0; }
+.history-item {
+  display:flex; align-items:center; gap:14px;
+  padding:14px 22px; border-bottom:1px solid var(--border);
+  transition:background .15s;
+}
+.history-item:last-child { border-bottom:none; }
+.history-item:hover { background:rgba(255,255,255,.02); }
+.hi-icon {
+  width:32px; height:32px; border-radius:8px;
+  background:var(--dark3); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; flex-shrink:0;
+}
+.hi-body { flex:1; min-width:0; }
+.hi-name {
+  font-family:var(--mono); font-size:12px; color:var(--text);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  margin-bottom:3px; letter-spacing:.02em;
+}
+.hi-meta {
+  font-family:var(--mono); font-size:10px; color:var(--text3);
+  letter-spacing:.04em;
+}
+.hi-tag {
+  font-family:var(--mono); font-size:10px; padding:3px 8px;
+  border-radius:5px; flex-shrink:0; letter-spacing:.06em;
+}
+.hi-tag.mp4 { background:rgba(255,46,46,.1); color:var(--red); border:1px solid rgba(255,46,46,.2); }
+.hi-tag.mp3 { background:rgba(95,202,95,.1); color:var(--green); border:1px solid rgba(95,202,95,.2); }
+
+.signin-prompt {
+  padding:32px 22px; text-align:center;
+}
+.signin-cta {
+  display:inline-flex; align-items:center; gap:10px;
+  background:var(--dark3); border:1px solid var(--border2);
+  border-radius:var(--r); padding:12px 22px; cursor:pointer;
+  font-family:var(--mono); font-size:12px; color:var(--text2);
+  letter-spacing:.05em; transition:all .15s;
+}
+.signin-cta:hover { border-color:var(--text3); color:var(--text); background:var(--dark4); }
+.g-logo {
+  width:16px; height:16px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='%23EA4335' d='M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z'/%3E%3Cpath fill='%234285F4' d='M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z'/%3E%3Cpath fill='%23FBBC05' d='M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z'/%3E%3Cpath fill='%2334A853' d='M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z'/%3E%3C/svg%3E") center/contain no-repeat;
+  flex-shrink:0;
+}
+.signin-note {
+  font-family:var(--mono); font-size:10px; color:var(--text3);
+  margin-top:12px; line-height:1.6; letter-spacing:.03em;
+}
+
+/* ── Sections ─────────────────────────────────────────────────── */
+.section-title {
+  font-family:var(--mono); font-size:10px;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--text3);
+  margin-bottom:20px; display:flex; align-items:center; gap:12px;
+}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* features */
+.features-grid {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:12px; margin-bottom:40px;
+}
+.feature-card {
+  background:var(--dark2); border:1px solid var(--border);
+  border-radius:var(--r); padding:18px 20px; transition:border-color .2s;
+}
+.feature-card:hover{border-color:var(--border2)}
+.feature-icon{font-size:20px;margin-bottom:10px;display:block}
+.feature-name{font-family:var(--sans);font-size:14px;font-weight:700;color:var(--text);margin-bottom:5px}
+.feature-desc{font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.6;letter-spacing:.02em}
+
+/* formats */
+.formats-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:40px}
+.format-pill {
+  font-family:var(--mono);font-size:11px;color:var(--text2);
+  background:var(--dark3);border:1px solid var(--border);
+  border-radius:999px;padding:5px 14px;letter-spacing:.06em;
+}
+.format-pill.highlight{border-color:var(--red);color:var(--red);background:rgba(255,46,46,.05)}
+
+/* platforms */
+.platforms-section{margin-bottom:48px}
+.platform-list{display:flex;flex-wrap:wrap;gap:10px}
+.platform-tag{
+  font-family:var(--mono);font-size:11px;color:var(--text2);
+  background:var(--dark3);border:1px solid var(--border);
+  border-radius:8px;padding:6px 14px;letter-spacing:.05em;
+  display:flex;align-items:center;gap:6px;
+}
+
+/* guide */
+.guide-section{margin-bottom:48px}
+.guide-steps{display:flex;flex-direction:column;gap:12px}
+.guide-step{
+  background:var(--dark2);border:1px solid var(--border);
+  border-radius:var(--r);padding:18px 20px;
+  display:flex;gap:16px;align-items:flex-start;
+}
+.step-num{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--red);flex-shrink:0;line-height:1;min-width:28px}
+.step-title{font-family:var(--sans);font-size:14px;font-weight:700;color:var(--text);margin-bottom:5px}
+.step-desc{font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.6;letter-spacing:.02em}
+.step-desc code{background:var(--dark4);border:1px solid var(--border2);border-radius:4px;padding:1px 6px;color:var(--red);font-size:10px}
+
+/* disclaimer */
+.disclaimer{
+  background:var(--dark2);border:1px solid var(--border);
+  border-left:3px solid var(--red);border-radius:0 var(--r) var(--r) 0;
+  padding:14px 18px;margin-bottom:48px;
+  font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.7;letter-spacing:.02em;
+}
+
+/* footer */
+footer{
+  border-top:1px solid var(--border);padding:24px 0;
+  display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:12px;margin-bottom:40px;
+}
+.footer-left{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:.05em}
+.footer-left a{color:var(--text2);text-decoration:none;transition:color .2s}
+.footer-left a:hover{color:var(--red)}
+.footer-right{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:.05em}
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media(max-width:600px){
+  .input-row{flex-direction:column}
+  .seg-group{min-width:0}
+  .hero-title{font-size:64px}
+  footer{flex-direction:column;text-align:center}
+  .protip-banner{padding:10px 16px}
+  .history-header{flex-direction:column;align-items:flex-start}
+}
 </style>
 </head>
 <body>
 
+<!-- ══ PRO TIP TOPPER BANNER ════════════════════════════════════════ -->
+<div class="protip-banner">
+  <span class="tip-icon">⚡</span>
+  <span class="tip-label">Pro tip</span>
+  <span class="tip-text">Append any video URL to the page address for instant pre-fill:</span>
+  <span class="tip-code" id="tipCode">drk.qzz.io/YT2VID/?url=<em>YOUR_LINK</em></span>
+  <span class="tip-copy" id="tipCopy">✓ copied</span>
+</div>
+
 <div class="wrap">
+
+  <!-- NAV -->
   <nav>
     <div class="nav-logo"><span>//</span> Y2VID.d4rkz</div>
-    <div class="nav-badge">d4rkz.qzz.io</div>
+    <div class="nav-right">
+      <div class="nav-badge">drk.qzz.io</div>
+      <!-- Auth button — toggled by JS -->
+      <button class="auth-btn signin" id="authBtn" style="display:none">
+        <div class="g-logo"></div>
+        <span id="authBtnText">Sign in</span>
+      </button>
+    </div>
   </nav>
 
+  <!-- HERO -->
   <div class="hero">
     <div class="hero-eyebrow">Free · No signup · No BS</div>
-    <h1 class="hero-title">
-      <span class="y">Y2</span><span class="vid">VID</span>
-    </h1>
+    <h1 class="hero-title"><span class="y">Y2</span><span class="vid">VID</span></h1>
     <p class="hero-sub">Download videos &amp; audio in seconds.</p>
     <p class="hero-sub">by <a href="https://d4rkz.qzz.io" target="_blank">D4rkz</a> · Powered by Cobalt</p>
   </div>
 
+  <!-- DOWNLOADER CARD -->
   <div class="dl-card">
+    <!-- Live instance bar -->
+    <div class="inst-bar" id="instBar">
+      <div class="dot"></div>
+      <span id="instText">Loading live Cobalt instances…</span>
+    </div>
+
+    <!-- URL input -->
     <div class="input-row">
-      <input
-        type="text"
-        class="url-input"
-        id="urlInput"
-        placeholder="https://youtube.com/watch?v=..."
-        autocomplete="off"
-        spellcheck="false"
-      />
+      <input type="text" class="url-input" id="urlInput"
+        placeholder="https://youtube.com/watch?v=…"
+        autocomplete="off" spellcheck="false"/>
       <button class="paste-btn" id="pasteBtn">PASTE</button>
     </div>
 
+    <!-- Format toggle -->
     <div class="options-row">
       <div class="seg-group">
         <span class="seg-label">FORMAT</span>
@@ -625,17 +636,23 @@
       </div>
     </div>
 
+    <!-- Quality strip (visible for MP4) -->
     <div class="quality-section" id="qualitySection">
       <div class="quality-label">Quality</div>
       <div class="quality-strip" id="qualityStrip">
-        <button class="q-btn" data-q="360">360p <span class="q-badge">SD</span></button>
-        <button class="q-btn" data-q="480">480p <span class="q-badge">SD</span></button>
-        <button class="q-btn active" data-q="720">720p <span class="q-badge">HD</span></button>
+        <button class="q-btn" data-q="144">144p  <span class="q-badge">SD</span></button>
+        <button class="q-btn" data-q="240">240p  <span class="q-badge">SD</span></button>
+        <button class="q-btn" data-q="360">360p  <span class="q-badge">SD</span></button>
+        <button class="q-btn" data-q="480">480p  <span class="q-badge">SD</span></button>
+        <button class="q-btn active" data-q="720">720p  <span class="q-badge">HD</span></button>
         <button class="q-btn" data-q="1080">1080p <span class="q-badge">FHD</span></button>
         <button class="q-btn" data-q="1440">1440p <span class="q-badge">2K</span></button>
+        <button class="q-btn" data-q="2160">4K    <span class="q-badge">4K</span></button>
+        <button class="q-btn" data-q="max">8K+   <span class="q-badge">MAX</span></button>
       </div>
     </div>
 
+    <!-- Download button -->
     <button class="dl-btn" id="dlBtn">
       <span>Download</span>
       <span class="arrow">↓</span>
@@ -649,6 +666,136 @@
     </div>
   </div>
 
+  <!-- ══ SETTINGS TOGGLE ════════════════════════════════════════ -->
+  <button class="settings-toggle" id="settingsToggle">
+    <div class="st-left">
+      <span class="st-icon">⚙️</span>
+      <span>Advanced settings</span>
+    </div>
+    <span class="st-arrow">▾</span>
+  </button>
+
+  <!-- ══ SETTINGS PANEL ═════════════════════════════════════════ -->
+  <div class="settings-panel" id="settingsPanel">
+
+    <!-- 1 — Video Quality -->
+    <div class="sp-section">
+      <div class="sp-title">video quality</div>
+      <div class="sp-desc">If preferred quality isn't available, <span>next best is picked instead.</span></div>
+      <div class="sp-quality-group" id="spQuality">
+        <button class="sp-btn" data-q="144">144p</button>
+        <button class="sp-btn" data-q="240">240p</button>
+        <button class="sp-btn" data-q="360">360p</button>
+        <button class="sp-btn" data-q="480">480p</button>
+        <button class="sp-btn active" data-q="720">720p</button>
+        <button class="sp-btn" data-q="1080">1080p</button>
+        <button class="sp-btn" data-q="1440">1440p</button>
+        <button class="sp-btn" data-q="2160">4k</button>
+        <button class="sp-btn" data-q="max">8k+</button>
+      </div>
+    </div>
+
+    <!-- 2 — Codec -->
+    <div class="sp-section">
+      <div class="sp-title">preferred youtube video codec</div>
+      <div class="sp-desc">
+        <span>h264:</span> best compatibility, average quality. max quality is 1080p.<br>
+        <span>av1:</span> best quality and efficiency. supports 8k &amp; HDR.<br>
+        <span>vp9:</span> same quality as av1, but file is ~2× bigger. supports 4k &amp; HDR.<br><br>
+        av1 and vp9 aren't widely supported — you may need additional software to play/edit them.
+      </div>
+      <div class="sp-btn-group" id="spCodec">
+        <button class="sp-btn active" data-c="h264">h264 + aac</button>
+        <button class="sp-btn" data-c="av1">av1 + opus</button>
+        <button class="sp-btn" data-c="vp9">vp9 + opus</button>
+      </div>
+    </div>
+
+    <!-- 3 — Container -->
+    <div class="sp-section">
+      <div class="sp-title">youtube file container</div>
+      <div class="sp-desc">
+        when <span>"auto"</span> is selected, cobalt picks the best container depending on codec:
+        mp4 for h264; webm for vp9/av1.
+      </div>
+      <div class="sp-btn-group" id="spContainer">
+        <button class="sp-btn active" data-ct="auto">auto</button>
+        <button class="sp-btn" data-ct="mp4">mp4</button>
+        <button class="sp-btn" data-ct="webm">webm</button>
+        <button class="sp-btn" data-ct="mkv">mkv</button>
+      </div>
+    </div>
+
+    <!-- 4 — H265 toggle -->
+    <div class="sp-section">
+      <div class="sp-title">high efficiency video codec</div>
+      <div class="sp-desc">
+        allows downloading videos from platforms like tiktok in higher quality at cost of compatibility.
+      </div>
+      <div class="sp-toggle-row">
+        <span class="sp-toggle-label">allow h265 for videos</span>
+        <label class="toggle-sw">
+          <input type="checkbox" id="togH265">
+          <div class="track"></div>
+          <div class="thumb"></div>
+        </label>
+      </div>
+    </div>
+
+    <!-- 5 — Twitter GIF toggle -->
+    <div class="sp-section">
+      <div class="sp-title">twitter / x</div>
+      <div class="sp-desc">
+        GIF conversion is inefficient — converted file may be obnoxiously big and low quality.
+      </div>
+      <div class="sp-toggle-row">
+        <span class="sp-toggle-label">convert looping videos to GIF</span>
+        <label class="toggle-sw">
+          <input type="checkbox" id="togGif" checked>
+          <div class="track"></div>
+          <div class="thumb"></div>
+        </label>
+      </div>
+    </div>
+
+  </div><!-- /settings-panel -->
+
+  <!-- ══ HISTORY (Auth) ═════════════════════════════════════════ -->
+  <div class="history-section">
+    <p class="section-title">Download history</p>
+    <div class="history-card" id="historyCard">
+
+      <!-- shown when logged out -->
+      <div class="signin-prompt" id="signinPrompt">
+        <button class="signin-cta" id="signinCta">
+          <div class="g-logo"></div>
+          Sign in with Google to save your history
+        </button>
+        <p class="signin-note">
+          Optional &amp; free. Your history is private to your account.<br>
+          No data is shared or sold.
+        </p>
+      </div>
+
+      <!-- shown when logged in -->
+      <div id="historyLoggedIn" style="display:none">
+        <div class="history-header">
+          <div class="history-header-left">
+            <span style="font-size:16px">🕑</span>
+            <span class="history-title">Recent downloads</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="history-user" id="historyUser"></span>
+            <button class="auth-btn signout" id="signoutBtn">Sign out</button>
+          </div>
+        </div>
+        <div id="historyList"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FEATURES -->
   <p class="section-title">Features</p>
   <div class="features-grid">
     <div class="feature-card">
@@ -658,13 +805,13 @@
     </div>
     <div class="feature-card">
       <span class="feature-icon">🔓</span>
-      <div class="feature-name">No Account</div>
-      <div class="feature-desc">No sign-up, no email, no login. Fully anonymous by design.</div>
+      <div class="feature-name">No Account Needed</div>
+      <div class="feature-desc">No sign-up required. Sign in only if you want to save history.</div>
     </div>
     <div class="feature-card">
       <span class="feature-icon">⚡</span>
-      <div class="feature-name">Fast Proxy</div>
-      <div class="feature-desc">Powered by open-source Cobalt instances — direct proxied streams.</div>
+      <div class="feature-name">Live Instances</div>
+      <div class="feature-desc">Fetches fresh working Cobalt instances on every load. No stale lists.</div>
     </div>
     <div class="feature-card">
       <span class="feature-icon">🎵</span>
@@ -673,27 +820,32 @@
     </div>
     <div class="feature-card">
       <span class="feature-icon">📺</span>
-      <div class="feature-name">Up to 1440p</div>
-      <div class="feature-desc">360p all the way to 2K quality. Pick what you need.</div>
+      <div class="feature-name">Up to 8K+</div>
+      <div class="feature-desc">144p all the way to 8K max. Pick what you need.</div>
     </div>
     <div class="feature-card">
-      <span class="feature-icon">🔒</span>
-      <div class="feature-name">Privacy First</div>
-      <div class="feature-desc">Nothing is stored. No logs, no cache, no fingerprinting.</div>
+      <span class="feature-icon">⚙️</span>
+      <div class="feature-name">Advanced Settings</div>
+      <div class="feature-desc">Codec, container, h265, GIF conversion — full Cobalt options exposed.</div>
     </div>
   </div>
 
+  <!-- FORMATS -->
   <p class="section-title">Output formats</p>
   <div class="formats-row">
     <span class="format-pill highlight">MP4</span>
     <span class="format-pill highlight">MP3</span>
-    <span class="format-pill">360p</span>
-    <span class="format-pill">480p</span>
+    <span class="format-pill">WebM</span>
+    <span class="format-pill">MKV</span>
+    <span class="format-pill">GIF</span>
     <span class="format-pill">720p HD</span>
     <span class="format-pill">1080p FHD</span>
     <span class="format-pill">1440p 2K</span>
+    <span class="format-pill">4K</span>
+    <span class="format-pill">8K+</span>
   </div>
 
+  <!-- PLATFORMS -->
   <div class="platforms-section">
     <p class="section-title">Also works with</p>
     <div class="platform-list">
@@ -709,232 +861,453 @@
     </div>
   </div>
 
+  <!-- HOW-TO GUIDE -->
+  <div class="guide-section" id="guide">
+    <p class="section-title">How to use</p>
+    <div class="guide-steps">
+      <div class="guide-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Copy the video link</div>
+          <div class="step-desc">Go to YouTube (or TikTok, Twitter, Instagram…), open the video you want, then copy the URL from your browser address bar. On mobile: tap <strong>Share → Copy link</strong>.</div>
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Paste it here</div>
+          <div class="step-desc">Click the <code>PASTE</code> button or press <code>Ctrl + V</code> inside the URL box. The link will appear immediately.</div>
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Choose format &amp; quality</div>
+          <div class="step-desc">Toggle <code>MP4</code> (video) or <code>MP3</code> (audio only). For MP4, pick a quality — <code>720p</code> is a great default. Use <strong>Advanced settings</strong> for codec, container, and platform-specific options.</div>
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">Hit Download</div>
+          <div class="step-desc">Press the red <strong>Download</strong> button. Y2VID tries several live Cobalt instances automatically — usually resolves in 2–5 seconds.</div>
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-title">Save your file</div>
+          <div class="step-desc">A green link appears — click it to open your file. On desktop: right-click → <strong>Save as</strong>. On mobile: tap and hold → <strong>Download</strong>.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DISCLAIMER -->
   <div class="disclaimer">
-    ⚠ Y2VID is a tool for downloading publicly accessible content only.
-    You are responsible for how you use downloaded content.
-    Do not download copyrighted material without permission from the rights holder.
-    Powered by open-source <a href="https://github.com/imputnet/cobalt" target="_blank" style="color:var(--text2);text-decoration:none;">Cobalt</a>.
+    ⚠ Y2VID is a tool for downloading publicly accessible content only. You are responsible for how you use downloaded content. Do not download copyrighted material without permission from the rights holder. Powered by open-source <a href="https://github.com/imputnet/cobalt" target="_blank" style="color:var(--text2);text-decoration:none">Cobalt</a>.
   </div>
 
   <footer>
     <div class="footer-left">
-      Built by <a href="https://d4rkz.qzz.io" target="_blank">D4rkz</a> · <a href="https://d4rkz.qzz.io" target="_blank">d4rkz.qzz.io</a>
+      Built by <a href="https://d4rkz.qzz.io" target="_blank">D4rkz</a> ·
+      <a href="https://d4rkz.qzz.io" target="_blank">d4rkz.qzz.io</a>
     </div>
     <div class="footer-right">Y2VID © 2026</div>
   </footer>
-</div>
 
+</div><!-- /wrap -->
+
+<!-- ══════════════════════════════════════════════════════════════
+     MAIN SCRIPT
+══════════════════════════════════════════════════════════════════ -->
 <script>
-// ─── Cobalt instances ───────────────────────────────────────────────────────
-// Each entry is tried in order until one succeeds.
-// All of these have CORS_WILDCARD enabled (required for browser-side requests).
-const COBALT_INSTANCES = [
+/* ── Cobalt instances ──────────────────────────────────────────── */
+const SEED_INSTANCES = [
   'https://cobalt.permitted.gg',
   'https://cobalt.seitan.network',
   'https://cobalt.lunar.icu',
   'https://cobalt.mha.fi',
   'https://cob.frytki.lol',
-  'https://cobalt.imput.net',   // official fallback
+  'https://cobalt.imput.net',
 ];
 
-// Required headers for Cobalt v10+.
-// Without "Accept: application/json" the server returns HTML and the
-// JSON.parse call throws — that's the "Failed to fetch" cascade you saw.
 const COBALT_HEADERS = {
   'Content-Type': 'application/json',
-  'Accept': 'application/json',
+  'Accept':       'application/json',
 };
 
-let selectedQuality = '720';
-let selectedFormat = 'mp4';
+let liveInstances = [];
 
-// ─── DOM refs ───────────────────────────────────────────────────────────────
-const urlInput     = document.getElementById('urlInput');
-const pasteBtn     = document.getElementById('pasteBtn');
-const dlBtn        = document.getElementById('dlBtn');
-const statusBox    = document.getElementById('statusBox');
-const resultLink   = document.getElementById('resultLink');
-const resultAnchor = document.getElementById('resultAnchor');
-const qualitySection = document.getElementById('qualitySection');
-const qBtns        = document.querySelectorAll('.q-btn');
-const fmtInputs    = document.querySelectorAll('input[name="fmt"]');
+/* ── Settings state ────────────────────────────────────────────── */
+let cfg = {
+  quality:   '720',
+  format:    'mp4',
+  codec:     'h264',
+  container: 'auto',
+  h265:      false,
+  twitterGif:true,
+};
 
-// ─── Paste button ────────────────────────────────────────────────────────────
+/* ── DOM ───────────────────────────────────────────────────────── */
+const urlInput      = document.getElementById('urlInput');
+const pasteBtn      = document.getElementById('pasteBtn');
+const dlBtn         = document.getElementById('dlBtn');
+const statusBox     = document.getElementById('statusBox');
+const resultLink    = document.getElementById('resultLink');
+const resultAnchor  = document.getElementById('resultAnchor');
+const qualSect      = document.getElementById('qualitySection');
+const qBtns         = document.querySelectorAll('.q-btn');
+const fmtInputs     = document.querySelectorAll('input[name="fmt"]');
+const instBar       = document.getElementById('instBar');
+const instText      = document.getElementById('instText');
+const settingsToggle= document.getElementById('settingsToggle');
+const settingsPanel = document.getElementById('settingsPanel');
+const tipCode       = document.getElementById('tipCode');
+const tipCopy       = document.getElementById('tipCopy');
+const authBtn       = document.getElementById('authBtn');
+const authBtnText   = document.getElementById('authBtnText');
+const signinPrompt  = document.getElementById('signinPrompt');
+const signinCta     = document.getElementById('signinCta');
+const signoutBtn    = document.getElementById('signoutBtn');
+const historyLoggedIn = document.getElementById('historyLoggedIn');
+const historyUser   = document.getElementById('historyUser');
+const historyList   = document.getElementById('historyList');
+
+/* ── ① URL param pre-fill ──────────────────────────────────────── */
+(function() {
+  try {
+    const u = new URLSearchParams(window.location.search).get('url');
+    if (u && u.startsWith('http')) urlInput.value = u.trim();
+  } catch(_) {}
+})();
+
+/* ── ② Pro-tip banner copy ─────────────────────────────────────── */
+tipCode.addEventListener('click', () => {
+  const txt = 'drk.qzz.io/YT2VID/?url=YOUR_LINK';
+  navigator.clipboard?.writeText(txt).catch(()=>{});
+  tipCopy.classList.add('show');
+  setTimeout(() => tipCopy.classList.remove('show'), 2000);
+});
+
+/* ── ③ Load live Cobalt instances ──────────────────────────────── */
+async function loadInstances() {
+  try {
+    const res = await fetch('https://instances.cobalt.best/api', {
+      headers: { 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) throw new Error('registry HTTP ' + res.status);
+    const list = await res.json();
+    const good = list
+      .filter(i => i.online === true && i.info?.cors === true)
+      .sort((a, b) => (b.score || 0) - (a.score || 0))
+      .map(i => `${i.protocol || 'https'}://${i.api}`)
+      .slice(0, 10);
+    if (!good.length) throw new Error('empty');
+    liveInstances = good;
+    instBar.classList.add('loaded');
+    instText.textContent = `${good.length} live instances ready`;
+  } catch(_) {
+    liveInstances = [...SEED_INSTANCES];
+    instBar.classList.add('warn');
+    instText.textContent = `Registry unreachable — using ${liveInstances.length} fallback instances`;
+  }
+}
+loadInstances();
+
+/* ── ④ Paste ───────────────────────────────────────────────────── */
 pasteBtn.addEventListener('click', async () => {
   try {
-    const txt = await navigator.clipboard.readText();
-    urlInput.value = txt.trim();
+    urlInput.value = (await navigator.clipboard.readText()).trim();
     urlInput.focus();
-  } catch {
-    urlInput.focus();
-    document.execCommand('paste');
-  }
+  } catch { urlInput.focus(); document.execCommand('paste'); }
 });
 
-// ─── Quality selector ────────────────────────────────────────────────────────
-qBtns.forEach(btn => {
+/* ── ⑤ Quality buttons (main strip) ────────────────────────────── */
+qBtns.forEach(btn => btn.addEventListener('click', () => {
+  qBtns.forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  cfg.quality = btn.dataset.q;
+  // sync settings panel
+  document.querySelectorAll('#spQuality .sp-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.q === cfg.quality);
+  });
+}));
+
+/* ── ⑥ Format toggle ────────────────────────────────────────────── */
+fmtInputs.forEach(inp => inp.addEventListener('change', () => {
+  cfg.format = inp.value;
+  qualSect.classList.toggle('hidden', cfg.format === 'mp3');
+}));
+
+/* ── ⑦ Settings panel toggle ────────────────────────────────────── */
+settingsToggle.addEventListener('click', () => {
+  const open = settingsPanel.classList.toggle('open');
+  settingsToggle.classList.toggle('open', open);
+});
+
+/* ── ⑧ Settings panel buttons ───────────────────────────────────── */
+// Quality in settings panel
+document.querySelectorAll('#spQuality .sp-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    qBtns.forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#spQuality .sp-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-    selectedQuality = btn.dataset.q;
+    cfg.quality = btn.dataset.q;
+    // sync main strip
+    qBtns.forEach(b => b.classList.toggle('active', b.dataset.q === cfg.quality));
   });
 });
 
-// ─── Format toggle ───────────────────────────────────────────────────────────
-fmtInputs.forEach(inp => {
-  inp.addEventListener('change', () => {
-    selectedFormat = inp.value;
-    qualitySection.classList.toggle('hidden', selectedFormat === 'mp3');
+// Codec
+document.querySelectorAll('#spCodec .sp-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#spCodec .sp-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    cfg.codec = btn.dataset.c;
   });
 });
 
-// ─── Status helpers ──────────────────────────────────────────────────────────
+// Container
+document.querySelectorAll('#spContainer .sp-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#spContainer .sp-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    cfg.container = btn.dataset.ct;
+  });
+});
+
+// Toggles
+document.getElementById('togH265').addEventListener('change', e => { cfg.h265 = e.target.checked; });
+document.getElementById('togGif').addEventListener('change',  e => { cfg.twitterGif = e.target.checked; });
+
+/* ── ⑨ Status helpers ───────────────────────────────────────────── */
 function showStatus(type, msg) {
   statusBox.className = 'status-box visible ' + type;
   statusBox.innerHTML = '';
-
-  if (type === 'loading') {
-    const spinner = document.createElement('div');
-    spinner.className = 'spinner';
-    statusBox.appendChild(spinner);
-  } else {
-    const dot = document.createElement('div');
-    dot.className = 'status-dot';
-    statusBox.appendChild(dot);
-  }
-
-  const span = document.createElement('span');
-  span.textContent = msg;
-  statusBox.appendChild(span);
+  const el = document.createElement('div');
+  el.className = type === 'loading' ? 'spinner' : 'status-dot';
+  statusBox.appendChild(el);
+  const sp = document.createElement('span');
+  sp.textContent = msg;
+  statusBox.appendChild(sp);
 }
-
-function hideStatus() {
-  statusBox.className = 'status-box';
-  statusBox.innerHTML = '';
-}
-
+function hideStatus() { statusBox.className = 'status-box'; statusBox.innerHTML = ''; }
 function showResult(url, filename) {
   resultLink.classList.add('visible');
   resultAnchor.href = url;
   resultAnchor.textContent = filename || 'Click to download your file ↗';
 }
+function hideResult() { resultLink.classList.remove('visible'); }
 
-function hideResult() {
-  resultLink.classList.remove('visible');
-}
-
-// ─── Core request ────────────────────────────────────────────────────────────
-// FIX 1: The original code called `tryCobaltInstance(instance + '/api/json')`
-//         then caught errors and called `tryCobaltInstance(instance)` — both
-//         paths ended up hitting the same broken URL.
-//         Now we explicitly probe `/` first (Cobalt v10 root endpoint) and
-//         fall back to `/api/json` (Cobalt v7–9) only on 404.
-//
-// FIX 2: `Accept: application/json` is now included in every request.
-//         Cobalt v10 returns a 400 Bad Request (or an HTML redirect page)
-//         when this header is absent, which caused the JSON parse to throw
-//         and bubble up as "Failed to fetch".
-
+/* ── ⑩ Cobalt request (v10 + v9 fallback) ──────────────────────── */
 async function tryCobaltInstance(baseUrl) {
   const body = {
-    url: urlInput.value.trim(),
-    videoQuality: selectedFormat === 'mp3' ? '720' : selectedQuality,
-    youtubeVideoCodec: 'h264',
+    url:               urlInput.value.trim(),
+    videoQuality:      cfg.format === 'mp3' ? '1080' : cfg.quality,
+    youtubeVideoCodec: cfg.codec,
+    downloadMode:      cfg.format === 'mp3' ? 'audio' : 'auto',
+    filenameStyle:     'basic',
+    twitterGif:        cfg.twitterGif,
+    allowH265:         cfg.h265,
   };
 
-  if (selectedFormat === 'mp3') {
-    body.audioFormat = 'mp3';
-    body.downloadMode = 'audio';
-  } else {
-    body.downloadMode = 'auto';
-  }
+  if (cfg.container !== 'auto') body.youtubeVideoContainer = cfg.container;
+  if (cfg.format === 'mp3') { body.audioFormat = 'mp3'; body.audioBitrate = '128'; }
 
-  // Try the v10 root endpoint first.
   let res = await fetch(baseUrl + '/', {
-    method: 'POST',
-    headers: COBALT_HEADERS,
+    method: 'POST', headers: COBALT_HEADERS,
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(12000),
+    signal: AbortSignal.timeout(15000),
   });
 
-  // If root gives 404, the instance is probably running an older version.
   if (res.status === 404) {
+    const b9 = { url: body.url, vQuality: body.videoQuality, vCodec: cfg.codec };
+    if (cfg.format === 'mp3') { b9.isAudioOnly = true; b9.aFormat = 'mp3'; }
     res = await fetch(baseUrl + '/api/json', {
-      method: 'POST',
-      headers: COBALT_HEADERS,
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(12000),
+      method: 'POST', headers: COBALT_HEADERS,
+      body: JSON.stringify(b9),
+      signal: AbortSignal.timeout(15000),
     });
   }
 
+  if (res.status === 401 || res.status === 403) throw new Error('auth required');
   if (!res.ok) throw new Error('HTTP ' + res.status);
-
-  const data = await res.json();
-  return data;
+  return res.json();
 }
 
-// ─── Download handler ────────────────────────────────────────────────────────
+/* ── ⑪ Download handler ─────────────────────────────────────────── */
 dlBtn.addEventListener('click', async () => {
   const url = urlInput.value.trim();
+  if (!url)                  { showStatus('error','Please paste a video URL first.'); return; }
+  if (!url.startsWith('http')){ showStatus('error','Invalid URL — must start with https://'); return; }
 
-  if (!url) {
-    showStatus('error', 'Please paste a video URL first.');
-    return;
-  }
-  if (!url.startsWith('http')) {
-    showStatus('error', 'Invalid URL — must start with https://');
-    return;
+  if (!liveInstances.length) {
+    showStatus('loading','Waiting for instance list…');
+    await new Promise(r => setTimeout(r, 2000));
+    if (!liveInstances.length) liveInstances = [...SEED_INSTANCES];
   }
 
   hideResult();
   dlBtn.disabled = true;
-  dlBtn.querySelector('span').textContent = 'Processing...';
-  showStatus('loading', 'Connecting to Cobalt...');
+  dlBtn.querySelector('span').textContent = 'Processing…';
+  showStatus('loading','Connecting to Cobalt…');
 
   let lastError = 'unknown error';
 
-  for (const instance of COBALT_INSTANCES) {
-    const host = new URL(instance).hostname;
+  for (const instance of liveInstances) {
+    let host;
+    try { host = new URL(instance).hostname; } catch { host = instance; }
     try {
       showStatus('loading', `Trying ${host}…`);
       const data = await tryCobaltInstance(instance);
 
-      // Surface-level error from the API itself.
       if (data.status === 'error' || data.error) {
-        const code = data.error?.code || data.status || 'unknown';
-        lastError = `${host}: API error — ${code}`;
+        lastError = `${host}: ${data.error?.code || data.status || 'API error'}`;
         continue;
       }
 
-      // Success paths: redirect, tunnel, or a bare url field.
       const dlUrl = data.url;
-      if (dlUrl && (data.status === 'redirect' || data.status === 'tunnel' || dlUrl)) {
-        const filename = data.filename || (selectedFormat === 'mp3' ? 'audio.mp3' : 'video.mp4');
+      if (dlUrl && (data.status === 'redirect' || data.status === 'tunnel' || typeof dlUrl === 'string')) {
+        const filename = data.filename || (cfg.format === 'mp3' ? 'audio.mp3' : 'video.mp4');
         hideStatus();
         showResult(dlUrl, filename);
         dlBtn.disabled = false;
         dlBtn.querySelector('span').textContent = 'Download';
+
+        // Firebase: log event + save history
+        try {
+          const fb = window._fb;
+          if (fb) {
+            fb.logEvent(fb.analytics, 'download_success', {
+              format: cfg.format, quality: cfg.quality, instance: host });
+
+            if (window._fbUser) {
+              const uid  = window._fbUser.uid;
+              const coll = fb.collection(fb.db, 'users', uid, 'history');
+              await fb.addDoc(coll, {
+                url, filename, format: cfg.format,
+                quality: cfg.quality, instance: host,
+                ts: fb.serverTimestamp(),
+              });
+              loadHistory(); // refresh history panel
+            }
+          }
+        } catch(_) {}
+
         return;
       }
-
-      lastError = `${host}: unexpected response (status: ${data.status ?? 'none'})`;
-    } catch (e) {
-      // "Failed to fetch" usually means CORS is blocked on this instance.
-      lastError = e.name === 'AbortError'
-        ? `${host}: timed out`
-        : `${host}: ${e.message}`;
+      lastError = `${host}: unexpected response (${data.status ?? 'none'})`;
+    } catch(e) {
+      lastError = e.name === 'AbortError' ? `${host}: timed out`
+               : e.message === 'auth required' ? `${host}: requires auth`
+               : `${host}: ${e.message}`;
     }
   }
 
-  showStatus('error', 'All instances failed — ' + lastError + '. Try again in a moment.');
+  showStatus('error','All instances failed — ' + lastError + '. Try again in a moment.');
   dlBtn.disabled = false;
   dlBtn.querySelector('span').textContent = 'Download';
 });
 
-// ─── Enter key ───────────────────────────────────────────────────────────────
-urlInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') dlBtn.click();
+urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') dlBtn.click(); });
+
+/* ── ⑫ Auth & History ───────────────────────────────────────────── */
+// Show auth button once Firebase is ready
+document.addEventListener('authchange', e => {
+  const user = e.detail;
+  authBtn.style.display = 'flex';
+
+  if (user) {
+    // Nav button → avatar + name
+    authBtn.className = 'auth-btn signout';
+    authBtn.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = user.photoURL || '';
+    img.alt = user.displayName || '';
+    img.className = 'auth-avatar';
+    img.onerror = () => img.style.display = 'none';
+    authBtn.appendChild(img);
+    const sp = document.createElement('span');
+    sp.textContent = user.displayName?.split(' ')[0] || 'Account';
+    authBtn.appendChild(sp);
+
+    // History panel
+    signinPrompt.style.display = 'none';
+    historyLoggedIn.style.display = 'block';
+    historyUser.textContent = user.email || '';
+    loadHistory();
+  } else {
+    authBtn.className = 'auth-btn signin';
+    authBtn.innerHTML = '<div class="g-logo"></div><span>Sign in</span>';
+    signinPrompt.style.display = 'block';
+    historyLoggedIn.style.display = 'none';
+  }
 });
+
+// Sign-in (nav button & card CTA)
+async function doSignIn() {
+  const fb = window._fb;
+  if (!fb) return;
+  try { await fb.signInWithPopup(fb.auth, fb.provider); }
+  catch(e) { console.warn('Sign-in cancelled or failed', e); }
+}
+authBtn.addEventListener('click', () => {
+  if (window._fbUser) { /* sign-out handled by signoutBtn */ return; }
+  doSignIn();
+});
+signinCta.addEventListener('click', doSignIn);
+signoutBtn.addEventListener('click', async () => {
+  const fb = window._fb;
+  if (fb) await fb.signOut(fb.auth);
+});
+
+// Load history from Firestore
+async function loadHistory() {
+  const fb   = window._fb;
+  const user = window._fbUser;
+  if (!fb || !user) return;
+
+  historyList.innerHTML = `<div class="history-empty"><span class="big">⏳</span>Loading…</div>`;
+
+  try {
+    const coll = fb.collection(fb.db, 'users', user.uid, 'history');
+    const q    = fb.query(coll, fb.orderBy('ts', 'desc'), fb.limit(20));
+    const snap = await fb.getDocs(q);
+
+    if (snap.empty) {
+      historyList.innerHTML = `<div class="history-empty"><span class="big">📭</span>No downloads yet.<br>Your history will appear here after your first download.</div>`;
+      return;
+    }
+
+    historyList.innerHTML = '';
+    snap.forEach(doc => {
+      const d = doc.data();
+      const item = document.createElement('div');
+      item.className = 'history-item';
+
+      const ts = d.ts?.toDate?.();
+      const timeStr = ts ? ts.toLocaleDateString(undefined, {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+
+      // Shorten URL for display
+      let displayUrl = d.url || '';
+      try { displayUrl = new URL(d.url).hostname + '…'; } catch(_) {}
+
+      item.innerHTML = `
+        <div class="hi-icon">${d.format === 'mp3' ? '🎵' : '🎬'}</div>
+        <div class="hi-body">
+          <div class="hi-name" title="${d.url || ''}">${d.filename || displayUrl}</div>
+          <div class="hi-meta">${displayUrl} · ${d.quality || ''} · ${timeStr}</div>
+        </div>
+        <span class="hi-tag ${d.format || 'mp4'}">${(d.format || 'mp4').toUpperCase()}</span>
+      `;
+      historyList.appendChild(item);
+    });
+  } catch(err) {
+    historyList.innerHTML = `<div class="history-empty">Could not load history. Check Firestore rules.</div>`;
+    console.warn('History load error:', err);
+  }
+}
 </script>
 
 </body>
