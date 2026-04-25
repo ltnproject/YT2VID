@@ -992,27 +992,9 @@ tipCode.addEventListener('click', () => {
 
 /* ── ③ Load live Cobalt instances ──────────────────────────────── */
 async function loadInstances() {
-  try {
-    const res = await fetch('https://api.cors.lol/?url=' + encodeURIComponent('https://instances.cobalt.best/api'), {
-      headers: { 'Accept': 'application/json' },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) throw new Error('registry HTTP ' + res.status);
-    const list = await res.json();
-    const good = list
-      .filter(i => i.online === true && i.info?.cors === true)
-      .sort((a, b) => (b.score || 0) - (a.score || 0))
-      .map(i => `${i.protocol || 'https'}://${i.api}`)
-      .slice(0, 10);
-    if (!good.length) throw new Error('empty');
-    liveInstances = good;
-    instBar.classList.add('loaded');
-    instText.textContent = `${good.length} live instances ready`;
-  } catch(_) {
-    liveInstances = [...SEED_INSTANCES];
-    instBar.classList.add('warn');
-    instText.textContent = `Registry unreachable — using ${liveInstances.length} fallback instances`;
-  }
+  liveInstances = [...SEED_INSTANCES];
+  instBar.classList.add('loaded');
+  instText.textContent = `${liveInstances.length} instances ready`;
 }
 loadInstances();
 
