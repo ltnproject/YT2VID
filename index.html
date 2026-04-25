@@ -993,7 +993,7 @@ tipCode.addEventListener('click', () => {
 /* ── ③ Load live Cobalt instances ──────────────────────────────── */
 async function loadInstances() {
   try {
-    const res = await fetch('https://instances.cobalt.best/api', {
+    const res = await fetch('https://api.cors.lol/?url=' + encodeURIComponent('https://instances.cobalt.best/api'), {
       headers: { 'Accept': 'application/json' },
       signal: AbortSignal.timeout(8000),
     });
